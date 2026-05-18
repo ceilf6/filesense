@@ -1,0 +1,17 @@
+{
+  "$schema": "schemas/FILES.notes.schema.json",
+  "directory_purpose": "Project root directory containing source code, configuration, and supporting files.",
+  "agent_hints": [
+    "Read README.md, package.json, tsconfig.json first for local entrypoints and conventions.",
+    "Inspect package.json before changing scripts, package metadata, or dependencies.",
+    "Respect tsconfig.json compiler settings when adding or moving TypeScript files."
+  ],
+  "conventions": [
+    "Update README.md when directory-level usage or setup changes."
+  ],
+  "key_entrypoints": [
+    "README.md",
+    "package.json",
+    "tsconfig.json"
+  ]
+}

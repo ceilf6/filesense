@@ -1,0 +1,13 @@
+{
+  "$schema": "../schemas/FILES.notes.schema.json",
+  "directory_purpose": "Primary application source directory.",
+  "agent_hints": [
+    "Read index.ts first for local entrypoints and conventions."
+  ],
+  "conventions": [
+    "Prefer TypeScript for new source files in this directory."
+  ],
+  "key_entrypoints": [
+    "index.ts"
+  ]
+}

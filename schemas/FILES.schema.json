@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://filesense.dev/schema/1.0/FILES.schema.json",
+  "title": "FILES.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "root_relative_path",
+    "directory",
+    "children",
+    "sync"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "root_relative_path": {
+      "type": "string"
+    },
+    "directory": {
+      "type": "object",
+      "required": [
+        "name",
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      }
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "path",
+          "ext",
+          "size",
+          "mtimeMs",
+          "hash",
+          "summary",
+          "importance",
+          "status"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "file",
+              "dir"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "ext": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "mtimeMs": {
+            "type": "number"
+          },
+          "hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "summary": {
+            "type": "string"
+          },
+          "importance": {
+            "enum": [
+              "high",
+              "normal"
+            ]
+          },
+          "status": {
+            "enum": [
+              "active"
+            ]
+          }
+        }
+      }
+    },
+    "sync": {
+      "type": "object",
+      "required": [
+        "child_count",
+        "file_count",
+        "dir_count",
+        "last_full_sync",
+        "last_incremental_sync"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "child_count": {
+          "type": "number"
+        },
+        "file_count": {
+          "type": "number"
+        },
+        "dir_count": {
+          "type": "number"
+        },
+        "last_full_sync": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_incremental_sync": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://filesense.dev/schema/1.0/FILES.notes.schema.json",
+  "title": "FILES.notes.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "directory_purpose": {
+      "type": "string"
+    },
+    "agent_hints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conventions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "key_entrypoints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

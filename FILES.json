@@ -1,6 +1,7 @@
 {
+  "$schema": "schemas/FILES.schema.json",
   "schema_version": "1.0",
-  "generated_at": "2026-05-18T08:21:59.424Z",
+  "generated_at": "2026-05-18T08:49:51.814Z",
   "root_relative_path": ".",
   "directory": {
     "name": "filesense",
@@ -24,9 +25,9 @@
       "type": "file",
       "path": "package-lock.json",
       "ext": ".json",
-      "size": 1342,
-      "mtimeMs": 1779091954448.1604,
-      "hash": "sha1:3edf844c80dde16a28d1836d28ef56b77dd21202",
+      "size": 1328,
+      "mtimeMs": 1779093649372.5896,
+      "hash": "sha1:531d51d2bdcc1d4a2572135762ae6f2b06f32a53",
       "summary": "JSON data file",
       "importance": "normal",
       "status": "active"
@@ -36,9 +37,9 @@
       "type": "file",
       "path": "package.json",
       "ext": ".json",
-      "size": 398,
-      "mtimeMs": 1779091946784.5051,
-      "hash": "sha1:b370af43e1173d9e20f0433b0f595fcb1a5c2a78",
+      "size": 390,
+      "mtimeMs": 1779093649372.2722,
+      "hash": "sha1:52a1069c5c8ef739da44e7b62a46cdc2e52e591b",
       "summary": "JSON data file",
       "importance": "high",
       "status": "active"
@@ -48,9 +49,9 @@
       "type": "file",
       "path": "README.md",
       "ext": ".md",
-      "size": 425,
-      "mtimeMs": 1779091946785.779,
-      "hash": "sha1:5dc51daaf774dde84fe2456c9b92382c579bd787",
+      "size": 820,
+      "mtimeMs": 1779094153162.641,
+      "hash": "sha1:094f8cad6fdb05f30d7647611266bbd5d67229fe",
       "summary": "Markdown document",
       "importance": "high",
       "status": "active"
@@ -61,7 +62,7 @@
       "path": "src",
       "ext": "",
       "size": 0,
-      "mtimeMs": 1779092000835.7998,
+      "mtimeMs": 1779094166410.3857,
       "hash": null,
       "summary": "Directory",
       "importance": "normal",
@@ -85,6 +86,6 @@
     "file_count": 5,
     "dir_count": 1,
     "last_full_sync": null,
-    "last_incremental_sync": "2026-05-18T08:21:59.424Z"
+    "last_incremental_sync": "2026-05-18T08:49:51.814Z"
   }
 }
