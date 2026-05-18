@@ -1,0 +1,17 @@
+{
+  "name": "files-agent-cli",
+  "version": "0.1.0",
+  "description": "Directory-scoped FILES.json indexer for agent-friendly environment sensing",
+  "type": "module",
+  "bin": {
+    "files-agent": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.8.3"
+  }
+}

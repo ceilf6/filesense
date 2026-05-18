@@ -1,0 +1,8 @@
+# One pattern per line
+# Bare names match any path segment
+.git
+node_modules
+dist
+build
+.next
+coverage

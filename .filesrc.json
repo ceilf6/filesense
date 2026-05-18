@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "root": ".",
+  "recursive": true,
+  "indexFile": "FILES.json",
+  "notesFile": "FILES.notes.json",
+  "ignoreFile": ".filesignore",
+  "exclude": [
+    ".git",
+    "node_modules",
+    "dist",
+    "build",
+    ".next",
+    "coverage"
+  ],
+  "hashAlgorithm": "sha1"
+}

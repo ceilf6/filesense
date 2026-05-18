@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-05-18T08:21:59.424Z",
+  "root_relative_path": ".",
+  "directory": {
+    "name": "filesense",
+    "path": "."
+  },
+  "children": [
+    {
+      "name": ".gitignore",
+      "type": "file",
+      "path": ".gitignore",
+      "ext": "",
+      "size": 18,
+      "mtimeMs": 1779091946785.6084,
+      "hash": "sha1:eb871b26090de0b2a1185e33acf98cd7719beac2",
+      "summary": "File without extension",
+      "importance": "normal",
+      "status": "active"
+    },
+    {
+      "name": "package-lock.json",
+      "type": "file",
+      "path": "package-lock.json",
+      "ext": ".json",
+      "size": 1342,
+      "mtimeMs": 1779091954448.1604,
+      "hash": "sha1:3edf844c80dde16a28d1836d28ef56b77dd21202",
+      "summary": "JSON data file",
+      "importance": "normal",
+      "status": "active"
+    },
+    {
+      "name": "package.json",
+      "type": "file",
+      "path": "package.json",
+      "ext": ".json",
+      "size": 398,
+      "mtimeMs": 1779091946784.5051,
+      "hash": "sha1:b370af43e1173d9e20f0433b0f595fcb1a5c2a78",
+      "summary": "JSON data file",
+      "importance": "high",
+      "status": "active"
+    },
+    {
+      "name": "README.md",
+      "type": "file",
+      "path": "README.md",
+      "ext": ".md",
+      "size": 425,
+      "mtimeMs": 1779091946785.779,
+      "hash": "sha1:5dc51daaf774dde84fe2456c9b92382c579bd787",
+      "summary": "Markdown document",
+      "importance": "high",
+      "status": "active"
+    },
+    {
+      "name": "src",
+      "type": "dir",
+      "path": "src",
+      "ext": "",
+      "size": 0,
+      "mtimeMs": 1779092000835.7998,
+      "hash": null,
+      "summary": "Directory",
+      "importance": "normal",
+      "status": "active"
+    },
+    {
+      "name": "tsconfig.json",
+      "type": "file",
+      "path": "tsconfig.json",
+      "ext": ".json",
+      "size": 311,
+      "mtimeMs": 1779091946785.377,
+      "hash": "sha1:f30b8ef2ec2a413fed3925e53194bc3d9bfcf9bb",
+      "summary": "JSON data file",
+      "importance": "high",
+      "status": "active"
+    }
+  ],
+  "sync": {
+    "child_count": 6,
+    "file_count": 5,
+    "dir_count": 1,
+    "last_full_sync": null,
+    "last_incremental_sync": "2026-05-18T08:21:59.424Z"
+  }
+}

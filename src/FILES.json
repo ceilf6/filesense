@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-05-18T08:21:59.426Z",
+  "root_relative_path": "src",
+  "directory": {
+    "name": "src",
+    "path": "src"
+  },
+  "children": [
+    {
+      "name": "index.ts",
+      "type": "file",
+      "path": "src/index.ts",
+      "ext": ".ts",
+      "size": 18357,
+      "mtimeMs": 1779092031936.8933,
+      "hash": "sha1:c79fecf2a593cc364bbcdbba80f0629756d7b539",
+      "summary": "TypeScript source file",
+      "importance": "high",
+      "status": "active"
+    }
+  ],
+  "sync": {
+    "child_count": 1,
+    "file_count": 1,
+    "dir_count": 0,
+    "last_full_sync": null,
+    "last_incremental_sync": "2026-05-18T08:21:59.426Z"
+  }
+}
