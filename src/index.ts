@@ -64,6 +64,7 @@ type ParsedArgs = {
   full: boolean;
   force: boolean;
   intervalMs: number;
+  maxDepth: number;
 };
 
 type SyncSummary = {
@@ -177,6 +178,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let full = false;
   let force = false;
   let intervalMs = 2000;
+  let maxDepth = Infinity;
 
   for (let index = 0; index < rest.length; index += 1) {
     const arg = rest[index];
@@ -195,6 +197,23 @@ function parseArgs(argv: string[]): ParsedArgs {
       index += 1;
     } else if (arg.startsWith("--interval=")) {
       intervalMs = parseInterval(arg.slice("--interval=".length));
+    } else if (arg === "--depth") {
+      const value = rest[index + 1];
+      if (!value) {
+        throw new Error("--depth requires a numeric value");
+      }
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        throw new Error("--depth must be a non-negative number");
+      }
+      maxDepth = Math.floor(parsed);
+      index += 1;
+    } else if (arg.startsWith("--depth=")) {
+      const parsed = Number(arg.slice("--depth=".length));
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        throw new Error("--depth must be a non-negative number");
+      }
+      maxDepth = Math.floor(parsed);
     } else if (arg.startsWith("--")) {
       throw new Error(`Unknown option: ${arg}`);
     } else {
@@ -208,7 +227,8 @@ function parseArgs(argv: string[]): ParsedArgs {
     json,
     full,
     force,
-    intervalMs
+    intervalMs,
+    maxDepth
   };
 }
 
@@ -235,6 +255,7 @@ Options:
   --full               Recompute file hashes even if mtime/size are unchanged
   --force              Overwrite inferred notes fields during summarize
   --interval <ms>      Poll interval for watch (default: 2000)
+  --depth <n>          Maximum recursion depth (default: unlimited)
   --json               Print machine-readable output`);
 }
 
@@ -854,6 +875,21 @@ function inferSummary(name: string): string {
   if (ext === ".yml" || ext === ".yaml") {
     return "YAML configuration file";
   }
+  if (ext === ".vue") {
+    return "Vue single-file component";
+  }
+  if (ext === ".svelte") {
+    return "Svelte component";
+  }
+  if (ext === ".css" || ext === ".scss" || ext === ".less" || ext === ".sass") {
+    return "Stylesheet";
+  }
+  if (ext === ".html") {
+    return "HTML document";
+  }
+  if (ext === ".svg") {
+    return "SVG image";
+  }
   if (!ext) {
     return "File without extension";
   }
@@ -861,7 +897,13 @@ function inferSummary(name: string): string {
 }
 
 function inferImportance(name: string): "high" | "normal" {
-  if (/^(readme|package|tsconfig|index|main)\./i.test(name)) {
+  if (/^(readme|package|tsconfig|index|main|app)\./i.test(name)) {
+    return "high";
+  }
+  if (/\.(config|rc)\./i.test(name)) {
+    return "high";
+  }
+  if (/^(vite|webpack|rollup|next|nuxt|tailwind|postcss|babel|jest|vitest)\.config\./i.test(name)) {
     return "high";
   }
   return "normal";
@@ -900,7 +942,7 @@ function inferDirectoryPurpose(index: IndexFile): string {
   if (dirName === "docs") {
     return "Documentation directory for project guides and reference material.";
   }
-  if (dirName === "test" || dirName === "tests") {
+  if (dirName === "test" || dirName === "tests" || dirName === "__tests__") {
     return "Automated test directory.";
   }
   if (dirName === "scripts") {
@@ -912,8 +954,50 @@ function inferDirectoryPurpose(index: IndexFile): string {
   if (dirName === "lib") {
     return "Shared library code directory.";
   }
-  if (dirName === "api") {
-    return "API-related source directory.";
+  if (dirName === "api" || dirName === "services") {
+    return "API/service layer directory.";
+  }
+  if (dirName === "hooks") {
+    return "Custom React hooks directory.";
+  }
+  if (dirName === "utils" || dirName === "helpers") {
+    return "Utility functions directory.";
+  }
+  if (dirName === "pages" || dirName === "views") {
+    return "Page/view components directory.";
+  }
+  if (dirName === "store" || dirName === "stores") {
+    return "State management directory.";
+  }
+  if (dirName === "styles" || dirName === "css") {
+    return "Stylesheets directory.";
+  }
+  if (dirName === "assets" || dirName === "public" || dirName === "static") {
+    return "Static assets directory.";
+  }
+  if (dirName === "types" || dirName === "typings") {
+    return "TypeScript type definitions directory.";
+  }
+  if (dirName === "layouts") {
+    return "Layout components directory.";
+  }
+  if (dirName === "middleware" || dirName === "middlewares") {
+    return "Middleware functions directory.";
+  }
+  if (dirName === "config" || dirName === "configs") {
+    return "Configuration files directory.";
+  }
+  if (dirName === "constants") {
+    return "Constants and enums directory.";
+  }
+  if (dirName === "models") {
+    return "Data models directory.";
+  }
+  if (dirName === "plugins") {
+    return "Plugin extensions directory.";
+  }
+  if (dirName === "i18n" || dirName === "locales" || dirName === "locale") {
+    return "Internationalization/localization directory.";
   }
 
   const fileCount = index.children.filter((child) => child.type === "file").length;
