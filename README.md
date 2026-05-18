@@ -1,13 +1,13 @@
-# files-agent-cli
+# filesense
 
 Agent-friendly directory indexing CLI.
 
 ## Commands
 
-- `files-agent init [path]`
-- `files-agent sync [path] [--full] [--json]`
-- `files-agent check [path] [--json]`
-- `files-agent query [path] [--json]`
+- `filesense init [path]`
+- `filesense sync [path] [--full] [--json]`
+- `filesense check [path] [--json]`
+- `filesense query [path] [--json]`
 
 ## Model
 

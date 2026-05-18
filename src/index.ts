@@ -150,7 +150,7 @@ function parseArgs(argv: string[]): ParsedArgs {
 }
 
 function printHelp(): void {
-  console.log(`files-agent <command> [path]
+  console.log(`filesense <command> [path]
 
 Commands:
   init   Initialize .filesrc.json and .filesignore, then sync

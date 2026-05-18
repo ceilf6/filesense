@@ -1,10 +1,10 @@
 {
-  "name": "files-agent-cli",
+  "name": "filesense",
   "version": "0.1.0",
   "description": "Directory-scoped FILES.json indexer for agent-friendly environment sensing",
   "type": "module",
   "bin": {
-    "files-agent": "dist/index.js"
+    "filesense": "dist/index.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
