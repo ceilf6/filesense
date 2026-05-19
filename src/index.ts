@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
-import { promises as fs } from "node:fs";
+import { createReadStream, promises as fs } from "node:fs";
 import path from "node:path";
-
-type CommandName = "init" | "sync" | "check" | "query" | "summarize" | "watch";
+import { parseArgs, type ParsedArgs } from "./args.js";
 
 type Config = {
   schemaVersion: string;
@@ -55,16 +54,6 @@ type NotesFile = {
   agent_hints?: string[];
   conventions?: string[];
   key_entrypoints?: string[];
-};
-
-type ParsedArgs = {
-  command: CommandName;
-  targetPath: string;
-  json: boolean;
-  full: boolean;
-  force: boolean;
-  intervalMs: number;
-  maxDepth: number;
 };
 
 type SyncSummary = {
@@ -160,103 +149,6 @@ async function main(): Promise<void> {
     console.error(message);
     process.exitCode = 1;
   }
-}
-
-function parseArgs(argv: string[]): ParsedArgs {
-  const [commandRaw, ...rest] = argv;
-  if (!commandRaw || commandRaw === "--help" || commandRaw === "-h") {
-    printHelp();
-    process.exit(0);
-  }
-
-  if (!["init", "sync", "check", "query", "summarize", "watch"].includes(commandRaw)) {
-    throw new Error(`Unknown command: ${commandRaw}`);
-  }
-
-  let targetPath = ".";
-  let json = false;
-  let full = false;
-  let force = false;
-  let intervalMs = 2000;
-  let maxDepth = Infinity;
-
-  for (let index = 0; index < rest.length; index += 1) {
-    const arg = rest[index];
-    if (arg === "--json") {
-      json = true;
-    } else if (arg === "--full") {
-      full = true;
-    } else if (arg === "--force") {
-      force = true;
-    } else if (arg === "--interval") {
-      const value = rest[index + 1];
-      if (!value) {
-        throw new Error("--interval requires a numeric value");
-      }
-      intervalMs = parseInterval(value);
-      index += 1;
-    } else if (arg.startsWith("--interval=")) {
-      intervalMs = parseInterval(arg.slice("--interval=".length));
-    } else if (arg === "--depth") {
-      const value = rest[index + 1];
-      if (!value) {
-        throw new Error("--depth requires a numeric value");
-      }
-      const parsed = Number(value);
-      if (!Number.isFinite(parsed) || parsed < 0) {
-        throw new Error("--depth must be a non-negative number");
-      }
-      maxDepth = Math.floor(parsed);
-      index += 1;
-    } else if (arg.startsWith("--depth=")) {
-      const parsed = Number(arg.slice("--depth=".length));
-      if (!Number.isFinite(parsed) || parsed < 0) {
-        throw new Error("--depth must be a non-negative number");
-      }
-      maxDepth = Math.floor(parsed);
-    } else if (arg.startsWith("--")) {
-      throw new Error(`Unknown option: ${arg}`);
-    } else {
-      targetPath = arg;
-    }
-  }
-
-  return {
-    command: commandRaw as CommandName,
-    targetPath,
-    json,
-    full,
-    force,
-    intervalMs,
-    maxDepth
-  };
-}
-
-function parseInterval(value: string): number {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed < 250) {
-    throw new Error("--interval must be a number >= 250");
-  }
-  return Math.floor(parsed);
-}
-
-function printHelp(): void {
-  console.log(`filesense <command> [path]
-
-Commands:
-  init       Initialize .filesrc.json, .filesignore, and schema files
-  sync       Recursively write FILES.json indexes
-  summarize  Write heuristic FILES.notes.json summaries
-  watch      Poll and sync continuously
-  check      Validate coverage, freshness, and basic schema shape
-  query      Read FILES.json and optional FILES.notes.json
-
-Options:
-  --full               Recompute file hashes even if mtime/size are unchanged
-  --force              Overwrite inferred notes fields during summarize
-  --interval <ms>      Poll interval for watch (default: 2000)
-  --depth <n>          Maximum recursion depth (default: unlimited)
-  --json               Print machine-readable output`);
 }
 
 async function runInit(args: ParsedArgs): Promise<void> {
@@ -431,7 +323,7 @@ async function syncIndexes(targetPath: string, fromInit: boolean, forceFull: boo
 
   await walkDirectories(root, root, config, ignores, async (dirPath) => {
     summary.directoriesScanned += 1;
-    const result = await writeDirectoryIndex(root, dirPath, config, forceFull);
+    const result = await writeDirectoryIndex(root, dirPath, config, ignores, forceFull);
     summary.filesHashed += result.filesHashed;
     if (result.wroteIndex) {
       summary.indexesWritten += 1;
@@ -541,9 +433,7 @@ async function checkIndexes(targetPath: string): Promise<CheckSummary> {
     }
 
     const actualEntries = await listTrackedEntries(root, dirPath, config, ignores);
-    const indexedNames = new Set(index.children.map((entry) => entry.name));
-    const actualNames = new Set(actualEntries.map((entry) => entry.name));
-    if (!sameSet(indexedNames, actualNames)) {
+    if (!entriesMatchIndex(index.children, actualEntries)) {
       summary.staleIndexes.push(relativeDisplay(root, dirPath));
     }
   }, () => undefined);
@@ -551,11 +441,10 @@ async function checkIndexes(targetPath: string): Promise<CheckSummary> {
   return summary;
 }
 
-async function writeDirectoryIndex(root: string, dirPath: string, config: Config, forceFull: boolean): Promise<WriteIndexResult> {
+async function writeDirectoryIndex(root: string, dirPath: string, config: Config, ignores: IgnoreMatcher, forceFull: boolean): Promise<WriteIndexResult> {
   const indexPath = path.join(dirPath, config.indexFile);
   const previous = (await exists(indexPath)) ? ((await readJson(indexPath)) as IndexFile) : null;
   const previousMap = new Map(previous?.children.map((child) => [child.name, child]) ?? []);
-  const ignores = await loadIgnoreMatcher(root, config);
   const entries = await listTrackedEntries(root, dirPath, config, ignores);
   const children: ChildEntry[] = [];
   let filesHashed = 0;
@@ -753,9 +642,65 @@ async function resolveRootAndConfig(targetPath: string): Promise<{ root: string;
 
 async function loadConfig(root: string): Promise<Config> {
   const configPath = path.join(root, ".filesrc.json");
-  return (await exists(configPath))
-    ? ({ ...DEFAULT_CONFIG, ...((await readJson(configPath)) as Partial<Config>) } satisfies Config)
-    : DEFAULT_CONFIG;
+  if (!(await exists(configPath))) {
+    return DEFAULT_CONFIG;
+  }
+
+  const parsed = await readJson(configPath);
+  const userConfig = validateConfig(parsed, configPath);
+  return { ...DEFAULT_CONFIG, ...userConfig } satisfies Config;
+}
+
+function validateConfig(value: unknown, configPath: string): Partial<Config> {
+  if (!isRecord(value)) {
+    throw new Error(`${configPath} must contain a JSON object`);
+  }
+
+  const config: Partial<Config> = {};
+  validateOptionalString(value, config, "schemaVersion", configPath);
+  validateOptionalString(value, config, "root", configPath);
+  validateOptionalString(value, config, "indexFile", configPath);
+  validateOptionalString(value, config, "notesFile", configPath);
+  validateOptionalString(value, config, "ignoreFile", configPath);
+  validateOptionalString(value, config, "schemaDir", configPath);
+
+  if ("recursive" in value) {
+    if (typeof value.recursive !== "boolean") {
+      throw new Error(`${configPath}: recursive must be a boolean`);
+    }
+    config.recursive = value.recursive;
+  }
+
+  if ("exclude" in value) {
+    if (!Array.isArray(value.exclude) || !value.exclude.every((item) => typeof item === "string")) {
+      throw new Error(`${configPath}: exclude must be an array of strings`);
+    }
+    config.exclude = value.exclude;
+  }
+
+  if ("hashAlgorithm" in value) {
+    if (value.hashAlgorithm !== "sha1") {
+      throw new Error(`${configPath}: hashAlgorithm must be "sha1"`);
+    }
+    config.hashAlgorithm = value.hashAlgorithm;
+  }
+
+  return config;
+}
+
+function validateOptionalString<T extends keyof Pick<Config, "schemaVersion" | "root" | "indexFile" | "notesFile" | "ignoreFile" | "schemaDir">>(
+  value: Record<string, unknown>,
+  config: Partial<Config>,
+  key: T,
+  configPath: string
+): void {
+  if (!(key in value)) {
+    return;
+  }
+  if (typeof value[key] !== "string" || value[key].length === 0) {
+    throw new Error(`${configPath}: ${key} must be a non-empty string`);
+  }
+  config[key] = value[key];
 }
 
 async function findConfigRoot(startPath: string): Promise<string> {
@@ -842,8 +787,14 @@ async function writeJson(targetPath: string, value: unknown): Promise<void> {
 }
 
 async function hashFile(targetPath: string, algorithm: "sha1"): Promise<string> {
-  const buffer = await fs.readFile(targetPath);
-  return `${algorithm}:${createHash(algorithm).update(buffer).digest("hex")}`;
+  const hash = createHash(algorithm);
+  await new Promise<void>((resolve, reject) => {
+    const stream = createReadStream(targetPath);
+    stream.on("data", (chunk) => hash.update(chunk));
+    stream.on("error", reject);
+    stream.on("end", resolve);
+  });
+  return `${algorithm}:${hash.digest("hex")}`;
 }
 
 function relativeToRoot(root: string, targetPath: string): string {
@@ -1250,7 +1201,7 @@ function isNullableString(value: unknown): boolean {
   return value === null || typeof value === "string";
 }
 
-function isRecord(value: unknown): value is Record<string, any> {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
@@ -1288,12 +1239,24 @@ function printOutput(json: boolean, payload: unknown, lines: string[]): void {
   console.log(lines.join("\n"));
 }
 
-function sameSet(left: Set<string>, right: Set<string>): boolean {
-  if (left.size !== right.size) {
+function entriesMatchIndex(
+  indexedEntries: ChildEntry[],
+  actualEntries: Array<{ name: string; type: "file" | "dir"; stat: Awaited<ReturnType<typeof fs.stat>> }>
+): boolean {
+  if (indexedEntries.length !== actualEntries.length) {
     return false;
   }
-  for (const item of left) {
-    if (!right.has(item)) {
+
+  const actualByName = new Map(actualEntries.map((entry) => [entry.name, entry]));
+  for (const indexed of indexedEntries) {
+    const actual = actualByName.get(indexed.name);
+    if (!actual || indexed.type !== actual.type) {
+      return false;
+    }
+    if (indexed.type === "file" && (indexed.size !== Number(actual.stat.size) || indexed.mtimeMs !== Number(actual.stat.mtimeMs))) {
+      return false;
+    }
+    if (indexed.type === "dir" && indexed.mtimeMs !== Number(actual.stat.mtimeMs)) {
       return false;
     }
   }

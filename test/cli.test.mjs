@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -81,5 +81,72 @@ test("summarize writes heuristic notes", async () => {
     assert.equal(summary.directoriesScanned, 1);
     assert.ok(summary.notesWritten >= 0);
     assert.ok(notes.directory_purpose.length > 0);
+  });
+});
+
+test("sync hashes file contents with stable sha1 output", async () => {
+  await withTempDir(async (dir) => {
+    const content = "large fixture\n".repeat(10_000);
+    await writeFile(path.join(dir, "large.txt"), content, "utf8");
+    await runCli(["init", dir, "--json"]);
+
+    const index = JSON.parse(await readFile(path.join(dir, "FILES.json"), "utf8"));
+    const entry = index.children.find((child) => child.name === "large.txt");
+
+    assert.match(entry.hash, /^sha1:[a-f0-9]{40}$/);
+  });
+});
+
+test("rejects invalid .filesrc.json values", async () => {
+  await withTempDir(async (dir) => {
+    await writeFile(path.join(dir, ".filesrc.json"), JSON.stringify({ exclude: "node_modules" }), "utf8");
+
+    await assert.rejects(
+      runCli(["sync", dir, "--json"]),
+      (error) => error.stderr.includes("exclude must be an array of strings")
+    );
+  });
+});
+
+test("check reports stale indexes when file metadata changes", async () => {
+  await withTempDir(async (dir) => {
+    await writeFile(path.join(dir, "tracked.txt"), "before\n", "utf8");
+    await runCli(["init", dir, "--json"]);
+    await writeFile(path.join(dir, "tracked.txt"), "after content is longer\n", "utf8");
+
+    const check = JSON.parse((await runCli(["check", dir, "--json"])).stdout);
+
+    assert.deepEqual(check.staleIndexes, ["."]);
+  });
+});
+
+test("sync applies .filesignore rules to files and directories", async () => {
+  await withTempDir(async (dir) => {
+    await writeFile(path.join(dir, ".filesignore"), "ignored.txt\nskipped/\n", "utf8");
+    await writeFile(path.join(dir, "kept.txt"), "kept\n", "utf8");
+    await writeFile(path.join(dir, "ignored.txt"), "ignored\n", "utf8");
+    await mkdir(path.join(dir, "skipped"));
+    await writeFile(path.join(dir, "skipped", "nested.txt"), "nested\n", "utf8");
+
+    await runCli(["init", dir, "--json"]);
+    const index = JSON.parse(await readFile(path.join(dir, "FILES.json"), "utf8"));
+
+    assert.ok(index.children.some((entry) => entry.name === "kept.txt"));
+    assert.ok(!index.children.some((entry) => entry.name === "ignored.txt"));
+    assert.ok(!index.children.some((entry) => entry.name === "skipped"));
+  });
+});
+
+test("accepts valid partial .filesrc.json values", async () => {
+  await withTempDir(async (dir) => {
+    await writeFile(path.join(dir, ".filesrc.json"), JSON.stringify({ recursive: false, exclude: ["ignored.txt"] }), "utf8");
+    await writeFile(path.join(dir, "kept.txt"), "kept\n", "utf8");
+    await writeFile(path.join(dir, "ignored.txt"), "ignored\n", "utf8");
+
+    await runCli(["sync", dir, "--json"]);
+    const index = JSON.parse(await readFile(path.join(dir, "FILES.json"), "utf8"));
+
+    assert.ok(index.children.some((entry) => entry.name === "kept.txt"));
+    assert.ok(!index.children.some((entry) => entry.name === "ignored.txt"));
   });
 });

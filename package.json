@@ -6,10 +6,35 @@
   "bin": {
     "filesense": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "schemas",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "test": "npm run build && node --test test/cli.test.mjs"
+    "test": "npm run build && node --test test/cli.test.mjs",
+    "check:public-sources": "node scripts/check-public-sources.mjs",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "cli",
+    "indexer",
+    "agents",
+    "filesystem"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ceilf6/filesense.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ceilf6/filesense/issues"
+  },
+  "homepage": "https://github.com/ceilf6/filesense#readme",
+  "engines": {
+    "node": ">=20"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",
