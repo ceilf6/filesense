@@ -431,7 +431,7 @@ async function syncIndexes(targetPath: string, fromInit: boolean, forceFull: boo
 
   await walkDirectories(root, root, config, ignores, async (dirPath) => {
     summary.directoriesScanned += 1;
-    const result = await writeDirectoryIndex(root, dirPath, config, forceFull);
+    const result = await writeDirectoryIndex(root, dirPath, config, ignores, forceFull);
     summary.filesHashed += result.filesHashed;
     if (result.wroteIndex) {
       summary.indexesWritten += 1;
@@ -551,11 +551,10 @@ async function checkIndexes(targetPath: string): Promise<CheckSummary> {
   return summary;
 }
 
-async function writeDirectoryIndex(root: string, dirPath: string, config: Config, forceFull: boolean): Promise<WriteIndexResult> {
+async function writeDirectoryIndex(root: string, dirPath: string, config: Config, ignores: IgnoreMatcher, forceFull: boolean): Promise<WriteIndexResult> {
   const indexPath = path.join(dirPath, config.indexFile);
   const previous = (await exists(indexPath)) ? ((await readJson(indexPath)) as IndexFile) : null;
   const previousMap = new Map(previous?.children.map((child) => [child.name, child]) ?? []);
-  const ignores = await loadIgnoreMatcher(root, config);
   const entries = await listTrackedEntries(root, dirPath, config, ignores);
   const children: ChildEntry[] = [];
   let filesHashed = 0;

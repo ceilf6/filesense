@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -105,6 +105,23 @@ test("rejects invalid .filesrc.json values", async () => {
       runCli(["sync", dir, "--json"]),
       (error) => error.stderr.includes("exclude must be an array of strings")
     );
+  });
+});
+
+test("sync applies .filesignore rules to files and directories", async () => {
+  await withTempDir(async (dir) => {
+    await writeFile(path.join(dir, ".filesignore"), "ignored.txt\nskipped/\n", "utf8");
+    await writeFile(path.join(dir, "kept.txt"), "kept\n", "utf8");
+    await writeFile(path.join(dir, "ignored.txt"), "ignored\n", "utf8");
+    await mkdir(path.join(dir, "skipped"));
+    await writeFile(path.join(dir, "skipped", "nested.txt"), "nested\n", "utf8");
+
+    await runCli(["init", dir, "--json"]);
+    const index = JSON.parse(await readFile(path.join(dir, "FILES.json"), "utf8"));
+
+    assert.ok(index.children.some((entry) => entry.name === "kept.txt"));
+    assert.ok(!index.children.some((entry) => entry.name === "ignored.txt"));
+    assert.ok(!index.children.some((entry) => entry.name === "skipped"));
   });
 });
 
