@@ -753,9 +753,65 @@ async function resolveRootAndConfig(targetPath: string): Promise<{ root: string;
 
 async function loadConfig(root: string): Promise<Config> {
   const configPath = path.join(root, ".filesrc.json");
-  return (await exists(configPath))
-    ? ({ ...DEFAULT_CONFIG, ...((await readJson(configPath)) as Partial<Config>) } satisfies Config)
-    : DEFAULT_CONFIG;
+  if (!(await exists(configPath))) {
+    return DEFAULT_CONFIG;
+  }
+
+  const parsed = await readJson(configPath);
+  const userConfig = validateConfig(parsed, configPath);
+  return { ...DEFAULT_CONFIG, ...userConfig } satisfies Config;
+}
+
+function validateConfig(value: unknown, configPath: string): Partial<Config> {
+  if (!isRecord(value)) {
+    throw new Error(`${configPath} must contain a JSON object`);
+  }
+
+  const config: Partial<Config> = {};
+  validateOptionalString(value, config, "schemaVersion", configPath);
+  validateOptionalString(value, config, "root", configPath);
+  validateOptionalString(value, config, "indexFile", configPath);
+  validateOptionalString(value, config, "notesFile", configPath);
+  validateOptionalString(value, config, "ignoreFile", configPath);
+  validateOptionalString(value, config, "schemaDir", configPath);
+
+  if ("recursive" in value) {
+    if (typeof value.recursive !== "boolean") {
+      throw new Error(`${configPath}: recursive must be a boolean`);
+    }
+    config.recursive = value.recursive;
+  }
+
+  if ("exclude" in value) {
+    if (!Array.isArray(value.exclude) || !value.exclude.every((item) => typeof item === "string")) {
+      throw new Error(`${configPath}: exclude must be an array of strings`);
+    }
+    config.exclude = value.exclude;
+  }
+
+  if ("hashAlgorithm" in value) {
+    if (value.hashAlgorithm !== "sha1") {
+      throw new Error(`${configPath}: hashAlgorithm must be "sha1"`);
+    }
+    config.hashAlgorithm = value.hashAlgorithm;
+  }
+
+  return config;
+}
+
+function validateOptionalString<T extends keyof Pick<Config, "schemaVersion" | "root" | "indexFile" | "notesFile" | "ignoreFile" | "schemaDir">>(
+  value: Record<string, unknown>,
+  config: Partial<Config>,
+  key: T,
+  configPath: string
+): void {
+  if (!(key in value)) {
+    return;
+  }
+  if (typeof value[key] !== "string" || value[key].length === 0) {
+    throw new Error(`${configPath}: ${key} must be a non-empty string`);
+  }
+  config[key] = value[key];
 }
 
 async function findConfigRoot(startPath: string): Promise<string> {
@@ -1250,7 +1306,7 @@ function isNullableString(value: unknown): boolean {
   return value === null || typeof value === "string";
 }
 
-function isRecord(value: unknown): value is Record<string, any> {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 

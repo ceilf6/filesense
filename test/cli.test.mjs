@@ -83,3 +83,28 @@ test("summarize writes heuristic notes", async () => {
     assert.ok(notes.directory_purpose.length > 0);
   });
 });
+
+test("rejects invalid .filesrc.json values", async () => {
+  await withTempDir(async (dir) => {
+    await writeFile(path.join(dir, ".filesrc.json"), JSON.stringify({ exclude: "node_modules" }), "utf8");
+
+    await assert.rejects(
+      runCli(["sync", dir, "--json"]),
+      (error) => error.stderr.includes("exclude must be an array of strings")
+    );
+  });
+});
+
+test("accepts valid partial .filesrc.json values", async () => {
+  await withTempDir(async (dir) => {
+    await writeFile(path.join(dir, ".filesrc.json"), JSON.stringify({ recursive: false, exclude: ["ignored.txt"] }), "utf8");
+    await writeFile(path.join(dir, "kept.txt"), "kept\n", "utf8");
+    await writeFile(path.join(dir, "ignored.txt"), "ignored\n", "utf8");
+
+    await runCli(["sync", dir, "--json"]);
+    const index = JSON.parse(await readFile(path.join(dir, "FILES.json"), "utf8"));
+
+    assert.ok(index.children.some((entry) => entry.name === "kept.txt"));
+    assert.ok(!index.children.some((entry) => entry.name === "ignored.txt"));
+  });
+});
