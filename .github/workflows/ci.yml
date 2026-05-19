@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check public sources
+        run: npm run check:public-sources
+
       - name: Build
         run: npm run build
 

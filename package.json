@@ -15,6 +15,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "test": "npm run build && node --test test/cli.test.mjs",
+    "check:public-sources": "node scripts/check-public-sources.mjs",
     "prepack": "npm run build"
   },
   "keywords": [
