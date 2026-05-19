@@ -108,6 +108,18 @@ test("rejects invalid .filesrc.json values", async () => {
   });
 });
 
+test("check reports stale indexes when file metadata changes", async () => {
+  await withTempDir(async (dir) => {
+    await writeFile(path.join(dir, "tracked.txt"), "before\n", "utf8");
+    await runCli(["init", dir, "--json"]);
+    await writeFile(path.join(dir, "tracked.txt"), "after content is longer\n", "utf8");
+
+    const check = JSON.parse((await runCli(["check", dir, "--json"])).stdout);
+
+    assert.deepEqual(check.staleIndexes, ["."]);
+  });
+});
+
 test("sync applies .filesignore rules to files and directories", async () => {
   await withTempDir(async (dir) => {
     await writeFile(path.join(dir, ".filesignore"), "ignored.txt\nskipped/\n", "utf8");

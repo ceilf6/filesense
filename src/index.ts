@@ -541,9 +541,7 @@ async function checkIndexes(targetPath: string): Promise<CheckSummary> {
     }
 
     const actualEntries = await listTrackedEntries(root, dirPath, config, ignores);
-    const indexedNames = new Set(index.children.map((entry) => entry.name));
-    const actualNames = new Set(actualEntries.map((entry) => entry.name));
-    if (!sameSet(indexedNames, actualNames)) {
+    if (!entriesMatchIndex(index.children, actualEntries)) {
       summary.staleIndexes.push(relativeDisplay(root, dirPath));
     }
   }, () => undefined);
@@ -1349,12 +1347,24 @@ function printOutput(json: boolean, payload: unknown, lines: string[]): void {
   console.log(lines.join("\n"));
 }
 
-function sameSet(left: Set<string>, right: Set<string>): boolean {
-  if (left.size !== right.size) {
+function entriesMatchIndex(
+  indexedEntries: ChildEntry[],
+  actualEntries: Array<{ name: string; type: "file" | "dir"; stat: Awaited<ReturnType<typeof fs.stat>> }>
+): boolean {
+  if (indexedEntries.length !== actualEntries.length) {
     return false;
   }
-  for (const item of left) {
-    if (!right.has(item)) {
+
+  const actualByName = new Map(actualEntries.map((entry) => [entry.name, entry]));
+  for (const indexed of indexedEntries) {
+    const actual = actualByName.get(indexed.name);
+    if (!actual || indexed.type !== actual.type) {
+      return false;
+    }
+    if (indexed.type === "file" && (indexed.size !== Number(actual.stat.size) || indexed.mtimeMs !== Number(actual.stat.mtimeMs))) {
+      return false;
+    }
+    if (indexed.type === "dir" && indexed.mtimeMs !== Number(actual.stat.mtimeMs)) {
       return false;
     }
   }
