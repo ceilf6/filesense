@@ -84,6 +84,19 @@ test("summarize writes heuristic notes", async () => {
   });
 });
 
+test("sync hashes file contents with stable sha1 output", async () => {
+  await withTempDir(async (dir) => {
+    const content = "large fixture\n".repeat(10_000);
+    await writeFile(path.join(dir, "large.txt"), content, "utf8");
+    await runCli(["init", dir, "--json"]);
+
+    const index = JSON.parse(await readFile(path.join(dir, "FILES.json"), "utf8"));
+    const entry = index.children.find((child) => child.name === "large.txt");
+
+    assert.match(entry.hash, /^sha1:[a-f0-9]{40}$/);
+  });
+});
+
 test("rejects invalid .filesrc.json values", async () => {
   await withTempDir(async (dir) => {
     await writeFile(path.join(dir, ".filesrc.json"), JSON.stringify({ exclude: "node_modules" }), "utf8");

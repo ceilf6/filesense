@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from "node:crypto";
-import { promises as fs } from "node:fs";
+import { createReadStream, promises as fs } from "node:fs";
 import path from "node:path";
 
 type CommandName = "init" | "sync" | "check" | "query" | "summarize" | "watch";
@@ -898,8 +898,14 @@ async function writeJson(targetPath: string, value: unknown): Promise<void> {
 }
 
 async function hashFile(targetPath: string, algorithm: "sha1"): Promise<string> {
-  const buffer = await fs.readFile(targetPath);
-  return `${algorithm}:${createHash(algorithm).update(buffer).digest("hex")}`;
+  const hash = createHash(algorithm);
+  await new Promise<void>((resolve, reject) => {
+    const stream = createReadStream(targetPath);
+    stream.on("data", (chunk) => hash.update(chunk));
+    stream.on("error", reject);
+    stream.on("end", resolve);
+  });
+  return `${algorithm}:${hash.digest("hex")}`;
 }
 
 function relativeToRoot(root: string, targetPath: string): string {
