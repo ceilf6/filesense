@@ -167,7 +167,7 @@ async function runInit(args: ParsedArgs): Promise<void> {
 
   const config = await loadConfig(root);
   await ensureSchemaFiles(root, config);
-  const summary = await syncIndexes(root, true, false);
+  const summary = await syncIndexes(root, true, false, Infinity);
   printOutput(args.json, {
     action: "init",
     root,
@@ -186,14 +186,14 @@ async function runInit(args: ParsedArgs): Promise<void> {
 
 async function runSync(args: ParsedArgs): Promise<void> {
   const root = path.resolve(args.targetPath);
-  const summary = await syncIndexes(root, false, args.full);
+  const summary = await syncIndexes(root, false, args.full, args.maxDepth);
   printOutput(args.json, summary, [formatSyncSummary(summary)]);
 }
 
 async function runSummarize(args: ParsedArgs): Promise<void> {
   const target = path.resolve(args.targetPath);
-  await syncIndexes(target, false, false);
-  const summary = await summarizeDirectories(target, args.force);
+  await syncIndexes(target, false, false, args.maxDepth);
+  const summary = await summarizeDirectories(target, args.force, args.maxDepth);
   printOutput(args.json, summary, [formatSummarizeSummary(summary)]);
 }
 
@@ -215,8 +215,8 @@ async function runWatch(args: ParsedArgs): Promise<void> {
     }
     running = true;
     try {
-      const syncSummary = await syncIndexes(target, false, args.full);
-      const summarizeSummary = await summarizeDirectories(target, false);
+      const syncSummary = await syncIndexes(target, false, args.full, args.maxDepth);
+      const summarizeSummary = await summarizeDirectories(target, false, args.maxDepth);
       if (args.json) {
         console.log(JSON.stringify({
           event: "tick",
@@ -271,7 +271,7 @@ async function runWatch(args: ParsedArgs): Promise<void> {
 
 async function runCheck(args: ParsedArgs): Promise<void> {
   const root = path.resolve(args.targetPath);
-  const summary = await checkIndexes(root);
+  const summary = await checkIndexes(root, args.maxDepth);
   const lines = [
     `Checked ${summary.checkedDirectories} directories under ${summary.root}`,
     `Missing indexes: ${summary.missingIndexes.length}`,
@@ -286,6 +286,15 @@ async function runCheck(args: ParsedArgs): Promise<void> {
   appendList(lines, "Invalid notes", summary.invalidNotes);
   appendList(lines, "Missing schemas", summary.missingSchemas);
   printOutput(args.json, summary, lines);
+
+  const hasIssues = summary.missingIndexes.length > 0
+    || summary.staleIndexes.length > 0
+    || summary.invalidIndexes.length > 0
+    || summary.invalidNotes.length > 0
+    || summary.missingSchemas.length > 0;
+  if (hasIssues) {
+    process.exitCode = 1;
+  }
 }
 
 async function runQuery(args: ParsedArgs): Promise<void> {
@@ -310,7 +319,7 @@ async function runQuery(args: ParsedArgs): Promise<void> {
   }, formatQuery(index, notes));
 }
 
-async function syncIndexes(targetPath: string, fromInit: boolean, forceFull: boolean): Promise<SyncSummary> {
+async function syncIndexes(targetPath: string, fromInit: boolean, forceFull: boolean, maxDepth: number): Promise<SyncSummary> {
   const { root, config, ignores } = await resolveRootAndConfig(targetPath);
   await ensureSchemaFiles(root, config);
   const summary: SyncSummary = {
@@ -321,7 +330,7 @@ async function syncIndexes(targetPath: string, fromInit: boolean, forceFull: boo
     directoriesSkipped: 0
   };
 
-  await walkDirectories(root, root, config, ignores, async (dirPath) => {
+  await walkDirectories(root, root, config, ignores, maxDepth, 0, async (dirPath) => {
     summary.directoriesScanned += 1;
     const result = await writeDirectoryIndex(root, dirPath, config, ignores, forceFull);
     summary.filesHashed += result.filesHashed;
@@ -339,7 +348,7 @@ async function syncIndexes(targetPath: string, fromInit: boolean, forceFull: boo
   return summary;
 }
 
-async function summarizeDirectories(targetPath: string, force: boolean): Promise<SummarizeSummary> {
+async function summarizeDirectories(targetPath: string, force: boolean, maxDepth: number): Promise<SummarizeSummary> {
   const { root, config, ignores } = await resolveRootAndConfig(targetPath);
   await ensureSchemaFiles(root, config);
   const summary: SummarizeSummary = {
@@ -349,7 +358,7 @@ async function summarizeDirectories(targetPath: string, force: boolean): Promise
     notesSkipped: 0
   };
 
-  await walkDirectories(root, root, config, ignores, async (dirPath) => {
+  await walkDirectories(root, root, config, ignores, maxDepth, 0, async (dirPath) => {
     summary.directoriesScanned += 1;
     const indexPath = path.join(dirPath, config.indexFile);
     if (!(await exists(indexPath))) {
@@ -374,7 +383,7 @@ async function summarizeDirectories(targetPath: string, force: boolean): Promise
   return summary;
 }
 
-async function checkIndexes(targetPath: string): Promise<CheckSummary> {
+async function checkIndexes(targetPath: string, maxDepth: number): Promise<CheckSummary> {
   const { root, config, ignores } = await resolveRootAndConfig(targetPath);
   const summary: CheckSummary = {
     root,
@@ -399,7 +408,7 @@ async function checkIndexes(targetPath: string): Promise<CheckSummary> {
     }
   }
 
-  await walkDirectories(root, root, config, ignores, async (dirPath) => {
+  await walkDirectories(root, root, config, ignores, maxDepth, 0, async (dirPath) => {
     summary.checkedDirectories += 1;
     const indexPath = path.join(dirPath, config.indexFile);
     if (!(await exists(indexPath))) {
@@ -603,12 +612,23 @@ async function walkDirectories(
   startDir: string,
   config: Config,
   ignores: IgnoreMatcher,
+  maxDepth: number,
+  currentDepth: number,
   onDirectory: (dirPath: string) => Promise<void>,
-  onSkip: () => void
+  onSkip: () => void,
+  visited?: Set<string>
 ): Promise<void> {
+  const realDir = await fs.realpath(startDir);
+  const seen = visited ?? new Set<string>();
+  if (seen.has(realDir)) {
+    onSkip();
+    return;
+  }
+  seen.add(realDir);
+
   await onDirectory(startDir);
 
-  if (!config.recursive) {
+  if (!config.recursive || currentDepth >= maxDepth) {
     return;
   }
 
@@ -627,7 +647,7 @@ async function walkDirectories(
       onSkip();
       continue;
     }
-    await walkDirectories(root, absolutePath, config, ignores, onDirectory, onSkip);
+    await walkDirectories(root, absolutePath, config, ignores, maxDepth, currentDepth + 1, onDirectory, onSkip, seen);
   }
 }
 
@@ -724,41 +744,80 @@ async function findConfigRoot(startPath: string): Promise<string> {
 }
 
 async function loadIgnoreMatcher(root: string, config: Config): Promise<IgnoreMatcher> {
-  const patterns = new Set(config.exclude);
+  type IgnoreRule = { pattern: string; negated: boolean; isGlob: boolean; regex?: RegExp };
+  const rules: IgnoreRule[] = [];
+
+  for (const pattern of config.exclude) {
+    const clean = pattern.replace(/\\/g, "/");
+    rules.push({ pattern: clean, negated: false, isGlob: clean.includes("*"), regex: clean.includes("*") ? globToRegex(clean) : undefined });
+  }
+
   const ignorePath = path.join(root, config.ignoreFile);
   if (await exists(ignorePath)) {
     const raw = await fs.readFile(ignorePath, "utf8");
     for (const line of raw.split(/\r?\n/)) {
-      const normalized = line.trim();
-      if (!normalized || normalized.startsWith("#")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) {
         continue;
       }
-      patterns.add(normalized.replace(/^\.\//, ""));
+      const negated = trimmed.startsWith("!");
+      const pattern = (negated ? trimmed.slice(1) : trimmed).replace(/^\.\//, "").replace(/\\/g, "/");
+      rules.push({ pattern, negated, isGlob: pattern.includes("*"), regex: pattern.includes("*") ? globToRegex(pattern) : undefined });
     }
   }
 
   return (relativePath: string, isDirectory: boolean): boolean => {
     const normalized = relativePath.replace(/\\/g, "/");
     const parts = normalized.split("/");
-    for (const pattern of patterns) {
-      const clean = pattern.replace(/\\/g, "/");
-      if (clean.endsWith("/")) {
-        const prefix = clean.slice(0, -1);
-        if (normalized === prefix || normalized.startsWith(prefix + "/")) {
-          return true;
+    let ignored = false;
+
+    for (const rule of rules) {
+      let matches = false;
+      if (rule.isGlob && rule.regex) {
+        matches = rule.regex.test(normalized) || rule.regex.test(path.basename(normalized));
+      } else {
+        const clean = rule.pattern;
+        if (clean.endsWith("/")) {
+          const prefix = clean.slice(0, -1);
+          matches = normalized === prefix || normalized.startsWith(prefix + "/");
+        } else if (clean.includes("/")) {
+          matches = normalized === clean || normalized.startsWith(clean + "/");
+        } else if (parts.includes(clean)) {
+          matches = true;
+        } else if (!isDirectory && path.basename(normalized) === clean) {
+          matches = true;
         }
-      } else if (clean.includes("/")) {
-        if (normalized === clean || normalized.startsWith(clean + "/")) {
-          return true;
-        }
-      } else if (parts.includes(clean)) {
-        return true;
-      } else if (!isDirectory && path.basename(normalized) === clean) {
-        return true;
+      }
+
+      if (matches) {
+        ignored = !rule.negated;
       }
     }
-    return false;
+
+    return ignored;
   };
+}
+
+function globToRegex(pattern: string): RegExp {
+  let regex = "";
+  let i = 0;
+  while (i < pattern.length) {
+    const char = pattern[i];
+    if (char === "*" && pattern[i + 1] === "*") {
+      regex += ".*";
+      i += pattern[i + 2] === "/" ? 3 : 2;
+    } else if (char === "*") {
+      regex += "[^/]*";
+      i += 1;
+    } else if (".+^${}()|[]\\".includes(char)) {
+      regex += "\\" + char;
+      i += 1;
+    } else {
+      regex += char;
+      i += 1;
+    }
+  }
+  return new RegExp("^" + regex + "$");
 }
 
 async function ensureDirectory(targetPath: string): Promise<void> {

@@ -85,11 +85,16 @@ node_modules
 coverage/
 .env
 packages/generated/
+*.log
+!important.log
 ```
 
 - A plain name ignores matching path parts.
 - A trailing slash ignores that directory and its contents.
 - A path with `/` ignores that relative path and descendants.
+- Glob patterns with `*` match file names (e.g., `*.log`, `build-*`).
+- `**` matches across directory boundaries (e.g., `src/**/test`).
+- A `!` prefix negates a previous rule, re-including the matched file.
 
 ## JSON output
 

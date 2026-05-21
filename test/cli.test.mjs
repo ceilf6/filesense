@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -114,7 +114,8 @@ test("check reports stale indexes when file metadata changes", async () => {
     await runCli(["init", dir, "--json"]);
     await writeFile(path.join(dir, "tracked.txt"), "after content is longer\n", "utf8");
 
-    const check = JSON.parse((await runCli(["check", dir, "--json"])).stdout);
+    const error = await runCli(["check", dir, "--json"]).catch((e) => e);
+    const check = JSON.parse(error.stdout);
 
     assert.deepEqual(check.staleIndexes, ["."]);
   });
@@ -148,5 +149,76 @@ test("accepts valid partial .filesrc.json values", async () => {
 
     assert.ok(index.children.some((entry) => entry.name === "kept.txt"));
     assert.ok(!index.children.some((entry) => entry.name === "ignored.txt"));
+  });
+});
+
+test("--depth limits recursion to the specified level", async () => {
+  await withTempDir(async (dir) => {
+    await mkdir(path.join(dir, "a", "b"), { recursive: true });
+    await writeFile(path.join(dir, "root.txt"), "root\n", "utf8");
+    await writeFile(path.join(dir, "a", "mid.txt"), "mid\n", "utf8");
+    await writeFile(path.join(dir, "a", "b", "deep.txt"), "deep\n", "utf8");
+
+    await runCli(["init", dir, "--json"]);
+    const syncAll = JSON.parse((await runCli(["sync", dir, "--json"])).stdout);
+    assert.ok(syncAll.directoriesScanned >= 3);
+
+    await runCli(["sync", dir, "--depth", "0", "--json"]);
+    const rootIndex = JSON.parse(await readFile(path.join(dir, "FILES.json"), "utf8"));
+    assert.ok(rootIndex.children.some((e) => e.name === "root.txt"));
+
+    const { stdout } = await runCli(["sync", dir, "--depth", "1", "--json"]);
+    const limited = JSON.parse(stdout);
+    assert.equal(limited.directoriesScanned, 2);
+  });
+});
+
+test("glob patterns in .filesignore filter matching files", async () => {
+  await withTempDir(async (dir) => {
+    await writeFile(path.join(dir, ".filesignore"), "*.log\nbuild-*\n", "utf8");
+    await writeFile(path.join(dir, "app.log"), "log\n", "utf8");
+    await writeFile(path.join(dir, "error.log"), "err\n", "utf8");
+    await writeFile(path.join(dir, "build-output"), "out\n", "utf8");
+    await writeFile(path.join(dir, "kept.txt"), "kept\n", "utf8");
+
+    await runCli(["init", dir, "--json"]);
+    const index = JSON.parse(await readFile(path.join(dir, "FILES.json"), "utf8"));
+
+    assert.ok(index.children.some((e) => e.name === "kept.txt"));
+    assert.ok(!index.children.some((e) => e.name === "app.log"));
+    assert.ok(!index.children.some((e) => e.name === "error.log"));
+    assert.ok(!index.children.some((e) => e.name === "build-output"));
+  });
+});
+
+test("negation patterns in .filesignore re-include excluded files", async () => {
+  await withTempDir(async (dir) => {
+    await writeFile(path.join(dir, ".filesignore"), "*.log\n!important.log\n", "utf8");
+    await writeFile(path.join(dir, "debug.log"), "debug\n", "utf8");
+    await writeFile(path.join(dir, "important.log"), "important\n", "utf8");
+    await writeFile(path.join(dir, "kept.txt"), "kept\n", "utf8");
+
+    await runCli(["init", dir, "--json"]);
+    const index = JSON.parse(await readFile(path.join(dir, "FILES.json"), "utf8"));
+
+    assert.ok(index.children.some((e) => e.name === "kept.txt"));
+    assert.ok(index.children.some((e) => e.name === "important.log"));
+    assert.ok(!index.children.some((e) => e.name === "debug.log"));
+  });
+});
+
+test("sync handles circular symlinks without infinite loop", async () => {
+  await withTempDir(async (dir) => {
+    await mkdir(path.join(dir, "a"));
+    await writeFile(path.join(dir, "a", "file.txt"), "content\n", "utf8");
+    await symlink(dir, path.join(dir, "a", "loop"));
+
+    await runCli(["init", dir, "--json"]);
+    const { stdout } = await runCli(["sync", dir, "--json"]);
+    const sync = JSON.parse(stdout);
+
+    assert.ok(sync.directoriesScanned >= 2);
+    const index = JSON.parse(await readFile(path.join(dir, "a", "FILES.json"), "utf8"));
+    assert.ok(index.children.some((e) => e.name === "file.txt"));
   });
 });

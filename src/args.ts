@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
 export type CommandName = "init" | "sync" | "check" | "query" | "summarize" | "watch";
 
 export type ParsedArgs = {
@@ -14,6 +18,11 @@ export function parseArgs(argv: string[]): ParsedArgs {
   const [commandRaw, ...rest] = argv;
   if (!commandRaw || commandRaw === "--help" || commandRaw === "-h") {
     printHelp();
+    process.exit(0);
+  }
+
+  if (commandRaw === "--version" || commandRaw === "-v") {
+    printVersion();
     process.exit(0);
   }
 
@@ -86,6 +95,13 @@ function parseInterval(value: string): number {
     throw new Error("--interval must be a number >= 250");
   }
   return Math.floor(parsed);
+}
+
+function printVersion(): void {
+  const thisDir = dirname(fileURLToPath(import.meta.url));
+  const pkgPath = resolve(thisDir, "..", "package.json");
+  const { version } = JSON.parse(readFileSync(pkgPath, "utf8"));
+  console.log(version);
 }
 
 function printHelp(): void {
