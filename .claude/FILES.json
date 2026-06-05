@@ -1,0 +1,31 @@
+{
+  "$schema": "../schemas/FILES.schema.json",
+  "schema_version": "1.0",
+  "generated_at": "2026-05-21T04:53:31.183Z",
+  "root_relative_path": ".claude",
+  "directory": {
+    "name": ".claude",
+    "path": ".claude"
+  },
+  "children": [
+    {
+      "name": "ralph-loop.local.md",
+      "type": "file",
+      "path": ".claude/ralph-loop.local.md",
+      "ext": ".md",
+      "size": 196,
+      "mtimeMs": 1779338629483.2068,
+      "hash": "sha1:de0ce915fe8fbcaba30e5bf4ea401f3fb4db1a1c",
+      "summary": "Markdown document",
+      "importance": "normal",
+      "status": "active"
+    }
+  ],
+  "sync": {
+    "child_count": 1,
+    "file_count": 1,
+    "dir_count": 0,
+    "last_full_sync": null,
+    "last_incremental_sync": "2026-05-21T04:53:31.183Z"
+  }
+}

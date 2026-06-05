@@ -1,7 +1,7 @@
 {
   "$schema": "../schemas/FILES.schema.json",
   "schema_version": "1.0",
-  "generated_at": "2026-05-18T08:49:51.817Z",
+  "generated_at": "2026-05-21T04:53:31.187Z",
   "root_relative_path": "src",
   "directory": {
     "name": "src",
@@ -9,23 +9,35 @@
   },
   "children": [
     {
+      "name": "args.ts",
+      "type": "file",
+      "path": "src/args.ts",
+      "ext": ".ts",
+      "size": 3727,
+      "mtimeMs": 1779338974463.5156,
+      "hash": "sha1:7ee32902ccfcac79220f6187c72250a5851ba5ef",
+      "summary": "TypeScript source file",
+      "importance": "normal",
+      "status": "active"
+    },
+    {
       "name": "index.ts",
       "type": "file",
       "path": "src/index.ts",
       "ext": ".ts",
-      "size": 39149,
-      "mtimeMs": 1779094181166.0967,
-      "hash": "sha1:ce9efbb073bbbfd6ca8d13f59aa1ea586fd2404b",
+      "size": 42986,
+      "mtimeMs": 1779339139049.2275,
+      "hash": "sha1:991be7ea54f8bd4b9676a4cabf0f648734d5bd12",
       "summary": "TypeScript source file",
       "importance": "high",
       "status": "active"
     }
   ],
   "sync": {
-    "child_count": 1,
-    "file_count": 1,
+    "child_count": 2,
+    "file_count": 2,
     "dir_count": 0,
     "last_full_sync": null,
-    "last_incremental_sync": "2026-05-18T08:49:51.817Z"
+    "last_incremental_sync": "2026-05-21T04:53:31.187Z"
   }
 }

@@ -1,21 +1,57 @@
 {
   "$schema": "schemas/FILES.schema.json",
   "schema_version": "1.0",
-  "generated_at": "2026-05-18T08:49:51.814Z",
+  "generated_at": "2026-05-21T04:53:37.406Z",
   "root_relative_path": ".",
   "directory": {
-    "name": "filesense",
+    "name": "Filesense-app",
     "path": "."
   },
   "children": [
+    {
+      "name": ".claude",
+      "type": "dir",
+      "path": ".claude",
+      "ext": "",
+      "size": 0,
+      "mtimeMs": 1779339211183.215,
+      "hash": null,
+      "summary": "Directory",
+      "importance": "normal",
+      "status": "active"
+    },
+    {
+      "name": ".codegraphcontext",
+      "type": "dir",
+      "path": ".codegraphcontext",
+      "ext": "",
+      "size": 0,
+      "mtimeMs": 1779339211184.2092,
+      "hash": null,
+      "summary": "Directory",
+      "importance": "normal",
+      "status": "active"
+    },
+    {
+      "name": ".github",
+      "type": "dir",
+      "path": ".github",
+      "ext": "",
+      "size": 0,
+      "mtimeMs": 1779339211185.2944,
+      "hash": null,
+      "summary": "Directory",
+      "importance": "normal",
+      "status": "active"
+    },
     {
       "name": ".gitignore",
       "type": "file",
       "path": ".gitignore",
       "ext": "",
-      "size": 18,
-      "mtimeMs": 1779091946785.6084,
-      "hash": "sha1:eb871b26090de0b2a1185e33acf98cd7719beac2",
+      "size": 28,
+      "mtimeMs": 1779254633729.2854,
+      "hash": "sha1:710bfccc7d2c53e2597555b0aeb43694bfd7342f",
       "summary": "File without extension",
       "importance": "normal",
       "status": "active"
@@ -25,9 +61,9 @@
       "type": "file",
       "path": "package-lock.json",
       "ext": ".json",
-      "size": 1328,
-      "mtimeMs": 1779093649372.5896,
-      "hash": "sha1:531d51d2bdcc1d4a2572135762ae6f2b06f32a53",
+      "size": 1567,
+      "mtimeMs": 1779338691578.0217,
+      "hash": "sha1:28912b18bb697c8f7031d36aed161e1a31fd3e45",
       "summary": "JSON data file",
       "importance": "normal",
       "status": "active"
@@ -37,9 +73,9 @@
       "type": "file",
       "path": "package.json",
       "ext": ".json",
-      "size": 390,
-      "mtimeMs": 1779093649372.2722,
-      "hash": "sha1:52a1069c5c8ef739da44e7b62a46cdc2e52e591b",
+      "size": 983,
+      "mtimeMs": 1779254633729.8472,
+      "hash": "sha1:364b744c25f8522545a4aa6675ac7afbc04aca51",
       "summary": "JSON data file",
       "importance": "high",
       "status": "active"
@@ -49,11 +85,23 @@
       "type": "file",
       "path": "README.md",
       "ext": ".md",
-      "size": 820,
-      "mtimeMs": 1779094153162.641,
-      "hash": "sha1:094f8cad6fdb05f30d7647611266bbd5d67229fe",
+      "size": 5068,
+      "mtimeMs": 1779339201664.1433,
+      "hash": "sha1:7601cc3d619f537657c9052d6b90b49f65768b00",
       "summary": "Markdown document",
       "importance": "high",
+      "status": "active"
+    },
+    {
+      "name": "scripts",
+      "type": "dir",
+      "path": "scripts",
+      "ext": "",
+      "size": 0,
+      "mtimeMs": 1779339211186.497,
+      "hash": null,
+      "summary": "Directory",
+      "importance": "normal",
       "status": "active"
     },
     {
@@ -62,7 +110,19 @@
       "path": "src",
       "ext": "",
       "size": 0,
-      "mtimeMs": 1779094166410.3857,
+      "mtimeMs": 1779339139049.8975,
+      "hash": null,
+      "summary": "Directory",
+      "importance": "normal",
+      "status": "active"
+    },
+    {
+      "name": "test",
+      "type": "dir",
+      "path": "test",
+      "ext": "",
+      "size": 0,
+      "mtimeMs": 1779339211188.7825,
       "hash": null,
       "summary": "Directory",
       "importance": "normal",
@@ -74,7 +134,7 @@
       "path": "tsconfig.json",
       "ext": ".json",
       "size": 311,
-      "mtimeMs": 1779091946785.377,
+      "mtimeMs": 1779254633731.535,
       "hash": "sha1:f30b8ef2ec2a413fed3925e53194bc3d9bfcf9bb",
       "summary": "JSON data file",
       "importance": "high",
@@ -82,10 +142,10 @@
     }
   ],
   "sync": {
-    "child_count": 6,
+    "child_count": 11,
     "file_count": 5,
-    "dir_count": 1,
+    "dir_count": 6,
     "last_full_sync": null,
-    "last_incremental_sync": "2026-05-18T08:49:51.814Z"
+    "last_incremental_sync": "2026-05-21T04:53:37.406Z"
   }
 }

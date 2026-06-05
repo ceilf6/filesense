@@ -1,0 +1,43 @@
+{
+  "$schema": "../schemas/FILES.schema.json",
+  "schema_version": "1.0",
+  "generated_at": "2026-05-21T04:53:37.408Z",
+  "root_relative_path": ".codegraphcontext",
+  "directory": {
+    "name": ".codegraphcontext",
+    "path": ".codegraphcontext"
+  },
+  "children": [
+    {
+      "name": ".env",
+      "type": "file",
+      "path": ".codegraphcontext/.env",
+      "ext": "",
+      "size": 4800,
+      "mtimeMs": 1779279826426.1665,
+      "hash": "sha1:972f4bcc34be74e003d8dedf40516db82c2edb88",
+      "summary": "File without extension",
+      "importance": "normal",
+      "status": "active"
+    },
+    {
+      "name": "db",
+      "type": "dir",
+      "path": ".codegraphcontext/db",
+      "ext": "",
+      "size": 0,
+      "mtimeMs": 1779339211184.922,
+      "hash": null,
+      "summary": "Directory",
+      "importance": "normal",
+      "status": "active"
+    }
+  ],
+  "sync": {
+    "child_count": 2,
+    "file_count": 1,
+    "dir_count": 1,
+    "last_full_sync": null,
+    "last_incremental_sync": "2026-05-21T04:53:37.408Z"
+  }
+}

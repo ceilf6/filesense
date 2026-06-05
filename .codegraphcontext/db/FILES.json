@@ -1,0 +1,31 @@
+{
+  "$schema": "../../schemas/FILES.schema.json",
+  "schema_version": "1.0",
+  "generated_at": "2026-05-21T04:53:31.184Z",
+  "root_relative_path": ".codegraphcontext/db",
+  "directory": {
+    "name": "db",
+    "path": ".codegraphcontext/db"
+  },
+  "children": [
+    {
+      "name": "falkordb.settings",
+      "type": "file",
+      "path": ".codegraphcontext/db/falkordb.settings",
+      "ext": ".settings",
+      "size": 322,
+      "mtimeMs": 1779338604259.5222,
+      "hash": "sha1:520c41a07e2c4897d664d759939dc794eda596e1",
+      "summary": "SETTINGS file",
+      "importance": "normal",
+      "status": "active"
+    }
+  ],
+  "sync": {
+    "child_count": 1,
+    "file_count": 1,
+    "dir_count": 0,
+    "last_full_sync": null,
+    "last_incremental_sync": "2026-05-21T04:53:31.184Z"
+  }
+}

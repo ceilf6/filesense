@@ -1,0 +1,31 @@
+{
+  "$schema": "../../schemas/FILES.schema.json",
+  "schema_version": "1.0",
+  "generated_at": "2026-05-21T04:53:31.185Z",
+  "root_relative_path": ".github/workflows",
+  "directory": {
+    "name": "workflows",
+    "path": ".github/workflows"
+  },
+  "children": [
+    {
+      "name": "ci.yml",
+      "type": "file",
+      "path": ".github/workflows/ci.yml",
+      "ext": ".yml",
+      "size": 698,
+      "mtimeMs": 1779254633729.192,
+      "hash": "sha1:ecef745984f3b7901540b33cb5ce3d5087253e54",
+      "summary": "YAML configuration file",
+      "importance": "normal",
+      "status": "active"
+    }
+  ],
+  "sync": {
+    "child_count": 1,
+    "file_count": 1,
+    "dir_count": 0,
+    "last_full_sync": null,
+    "last_incremental_sync": "2026-05-21T04:53:31.185Z"
+  }
+}
